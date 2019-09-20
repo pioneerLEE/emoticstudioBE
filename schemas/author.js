@@ -19,11 +19,12 @@ const authorSchema = new Schema({
         ref:'Emojipack'
     }
   ],
-  // 성별 'male' 'female' 'x'
+  // 작가의 성별은 필요없는 정보이므로 삭제
+  /* 성별 'male' 'female' 'x'
   gender:{
     type:String,
     required: true,
-  },
+  },*/
   //생년월일
   birth:{
       type:Number,
