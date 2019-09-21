@@ -23,5 +23,9 @@ module.exports = () =>{
         console.error('몽고디비 연결이 끊겼습니다. 연결을 재시도합니다.')
     });
     require('./author');
+    require('./emojipack');
+    require('./language');
+    require('./tag');
+    require('./emojicolor');
 }
 

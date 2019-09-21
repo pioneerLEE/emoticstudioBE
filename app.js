@@ -6,6 +6,7 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var mystudioRouter = require('./routes/mystudio');
 
 var app = express();
 var connect = require('./schemas');
@@ -23,7 +24,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/mystudio', mystudioRouter);
 
 //404처리 미들웨어
 app.use((req,res,next)=>{

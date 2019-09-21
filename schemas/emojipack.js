@@ -71,6 +71,12 @@ const emojipackSchema = new Schema({
   price: {
     type: Number,
   },
+  //심사 중: "decision in process" 완료: "complete" 반려:"return"
+  status:{
+    type:String,
+    required:true,
+    default:"decision in process"
+  },
   data_created: {
     type: Date,
     default: Date(),
