@@ -52,6 +52,7 @@ const emojipackSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  //종류
   isAnimated: {
     type: Boolean,
     default: false,

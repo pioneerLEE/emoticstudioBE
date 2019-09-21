@@ -15,13 +15,12 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);//sendgrid 설정
 router.get('/signup/author/confirmEmail',async(req,res,next)=>{
   const key_for_verify=req.query.key
   try{
-    const exAuthor = await Author.update({key_for_verify},{email_verified:true});
-    if(exAuthor){
-      res.send(200);
+    const exAuthor=await Author.updateOne({key_for_verify},{email_verified:true});
+    if(exAuthor.n){
+      res.send(200)
     }else{
-      res.send(401);
+      res.send(401)
     }
-    
   }catch(error){
     next(error);
   }
@@ -33,11 +32,11 @@ router.post('/signup/author',async(req,res,next)=>{
   const { email, password, name, birth } = req.body;
   try{
     const [checkAuthor] = await Author.find({email});
-    console.log(checkAuthor)
     if(checkAuthor){ //email 중복 체크
       res.send(401);
     }else{ //회원가입
-      const key_for_verify = crypto.randomBytes(256).toString('hex').substr(100, 5) + crypto.randomBytes(256).toString('base64').substr(50, 5); //인증 키
+      var key_for_verify = crypto.randomBytes(256).toString('hex').substr(100, 5)
+      key_for_verify += crypto.randomBytes(256).toString('base64').substr(50, 5); //인증 키
       const url = 'http://' + req.get('host')+'/signup/author/confirmEmail'+'?key='+key_for_verify; //인증을 위한 주소
       const hash = await bcrypt.hash(password, 5);
       const exAuthor = new Author({
@@ -75,33 +74,36 @@ router.post('/signup/author/email',async(req,res,next)=>{
     next(error);
   }
 });
+
 router.post('/signin/author',async(req,res,next)=>{
   const {email, password} = req.body;
   try{
-    if(email && password){
-      const [exAuthor] = await Author.find({email});
-      if(exAuthor){
-        let payload ={
-          _id: email._id
-        }
-        let token = JWT.sign({
-          email: payload
-        },
-        cfg.jwtSecret,    // 비밀 키
-        {
-          expiresIn: '30 days'    // 유효 시간은 30일
-        });
-        res.status(200).json({
-          token: token
-        });
-      }else{
-        res.send(401); //수정해야함
-      }
+    const [exAuthor] = await Author.find({email});
+    const result = await bcrypt.compare(password,exAuthor.password);
+
+    if(result){
+      console.log(exAuthor._id)
+
+      let token = JWT.sign({
+        _id:exAuthor._id
+      },
+      cfg.jwtSecret,    // 비밀 키
+      {
+        expiresIn: '30 days'    // 유효 시간은 30일
+      });
+      res.status(200).json({
+        token: token
+      });
+    }else{
+      res.send(401); //수정해야함
+      
     }
   }catch(error){
     next(error);
   }
-})
+});
+
+
 
 
 module.exports = router;

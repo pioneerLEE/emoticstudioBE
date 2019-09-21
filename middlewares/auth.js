@@ -13,9 +13,10 @@ const params = {
 module.exports = function(){
     const strategy = new Strategy(params,async(payload, done)=>{
 
-        const user = await Author.find({_id:payload._id});
+        const [user] = await Author.find({_id:payload._id});
+        console.log('user: ',user)
         if(user){
-            return done(null,{ id : user._id });
+            return done(null,{ _id : user._id });
         }else{
             return done(new Error('User not found'), null);
         }
