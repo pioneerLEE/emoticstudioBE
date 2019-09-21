@@ -6,7 +6,7 @@ module.exports = () =>{
             mongoose.set('debug', true);
         }
         mongoose.connect('mongodb://root@localhost:27017/admin',{
-            dbName:'ChatSample'
+            dbName:'emoticstudio'
         },(error)=>{
             if(error){
                 console.log('몽고디비 연결 에러',error);
@@ -22,7 +22,6 @@ module.exports = () =>{
     mongoose.connection.on('disconnected',()=>{
         console.error('몽고디비 연결이 끊겼습니다. 연결을 재시도합니다.')
     });
-    require('./emojipack');
     require('./author');
 }
 
