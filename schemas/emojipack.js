@@ -10,7 +10,8 @@ const emojipackSchema = new Schema({
   },
   author: {
     type: ObjectId,
-    ref: 'Author'
+    ref: 'Author',
+    required:true,
   },
   //이모티콘 설명
   summary: {

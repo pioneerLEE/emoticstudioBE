@@ -24,8 +24,7 @@ module.exports = () =>{
     });
     require('./author');
     require('./emojipack');
-    require('./language');
+    require('./emoji');
     require('./tag');
-    require('./emojicolor');
 }
 

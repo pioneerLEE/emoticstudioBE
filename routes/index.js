@@ -45,16 +45,16 @@ router.post('/signup/author',async(req,res,next)=>{
         password:hash,
         birth,
         key_for_verify
-    });
-    const msg = { //인증 메일
-      to: email,
-      from: 'sltkdaks@naver.com', //나중에 회사 메일 하나 만들기
-      subject: '회원가입 완료',
-      html : '<h1>이메일 인증을 위해 URL을 클릭해주세요.</h1><br>'+url
-    };
-    sgMail.send(msg);
-    await exAuthor.save();
-    res.json(201);
+      });
+      const msg = { //인증 메일
+        to: email,
+        from: 'sltkdaks@naver.com', //나중에 회사 메일 하나 만들기
+        subject: '회원가입 완료',
+        html : '<h1>이메일 인증을 위해 URL을 클릭해주세요.</h1><br>'+url
+      };
+      sgMail.send(msg);
+      await exAuthor.save();
+      res.json(201);
     }
   }catch(error){
     next(error);
