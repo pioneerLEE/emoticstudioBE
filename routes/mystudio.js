@@ -22,14 +22,15 @@ router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(
     const { isAnimated , name , tag , price , summary } = req.body;
     const emojiFiles = req.files;
     try{
-        const exAuthor = await Author.findOne({_id:req.user._id});
+        const exAuthor = await Author.findOne({user:req.user._id});
         
         const exEmojipack = new Emojipack({
-            isAnimated: true,
+            isAnimated,
             name,
-            author:req.user._id,
+            author:exAuthor._id,
             emojis:[],
-            summary
+            summary,
+            typicalEmoji:null
         });
         await fs.mkdir(`emoji/${name}`,(err)=>{
             if(err){
@@ -45,6 +46,9 @@ router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(
             });
             emoji.save();
             await exEmojipack.emojis.push(emoji._id);
+            if(i==0){
+                exEmojipack.typicalEmoji = emoji._id;
+            }
             fs.rename(emojiFile.path,`emoji/${name}/${i}.${ext}`,(err)=>{
                 if(err){
                     next(err)

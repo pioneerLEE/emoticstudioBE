@@ -3,7 +3,11 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const { Types: { ObjectId }} = Schema;
 const serviceSchema = new Schema({
-  apikey:{
+  name:{
+    type: String,
+    required: true,
+  },
+  api_key:{
     type: String,
     required: true,
   },

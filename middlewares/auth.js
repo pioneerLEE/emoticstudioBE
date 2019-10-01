@@ -1,6 +1,6 @@
 const passport = require('passport');
 const passportJWT = require('passport-jwt');
-const Author = require('../schemas/author');
+const User = require('../schemas/user');
 const cfg = require('../jwt_config');
 const ExtractJwt = passportJWT.ExtractJwt;
 const Strategy = passportJWT.Strategy;
@@ -13,10 +13,10 @@ const params = {
 module.exports = function(){
     const strategy = new Strategy(params,async(payload, done)=>{
 
-        const [user] = await Author.find({_id:payload._id});
-        console.log('user: ',user)
-        if(user){
-            return done(null,{ _id : user._id });
+        const [exUser] = await User.find({_id:payload._id});
+        console.log('user: ',exUser)
+        if(exUser){
+            return done(null,{ _id : exUser._id });
         }else{
             return done(new Error('User not found'), null);
         }

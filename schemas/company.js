@@ -3,29 +3,23 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const { Types: { ObjectId }} = Schema;
 const companySchema = new Schema({
+  user:{
+    type: ObjectId,
+    ref:'User',
+    required: true,
+  },
   name:{
     type: String,
     required: true,
   },
-  url:{
+  link:{
     type: String,
-    required: true,
   },
   logo:{
     type: String,
-    required: true,
-  },
-  email:{
-    type: String,
-    required: true,
-  },
-  password:{
-    type: String,
-    required: true,
   },
   summary:{
     type: String,
-    required: true,
   },
   services:[
       {

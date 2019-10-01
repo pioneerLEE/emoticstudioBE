@@ -3,10 +3,6 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const { Types: { ObjectId }} = Schema;
 const userSchema = new Schema({
-  nick:{
-    type: String,
-    required: true,
-  },
   provider:{
     type: String,
   },
@@ -19,25 +15,24 @@ const userSchema = new Schema({
   password:{
     type: String,
   },
-  emojipacks:[
-    {
-        type:ObjectId,
-        ref:'Emojipack'
-    }
-  ],
-  services:[
-    {
-      type:ObjectId,
-      ref:'Service'
-    }
-  ],
-  // 성별 'male' 'female' 'x' 하...
-  gender:{
-    type:String
+  nomaluser:{
+    type:ObjectId,
+    ref:'Nomaluser'
   },
-  //생년월일
-  birth:{
-      type:Number,
+  author:{
+    type:ObjectId,
+    ref:'Author'
+  },
+  company:{
+    type:ObjectId,
+    ref:'Company'
+  },
+  email_verified :{ 
+    type: Boolean, 
+    default: false 
+  },
+  key_for_verify :{
+    type: String,
   },
   data_created:{
     type: Date,

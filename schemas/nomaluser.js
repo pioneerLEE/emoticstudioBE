@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 const { Types: { ObjectId }} = Schema;
-const authorSchema = new Schema({
+const nomaluserSchema = new Schema({
   user:{
     type: ObjectId,
     ref:'User',
     required: true,
   },
   nick:{
-    type: String,
+    type:String,
     required: true,
   },
   emojipacks:[
@@ -18,10 +18,15 @@ const authorSchema = new Schema({
         ref:'Emojipack'
     }
   ],
-  //생년월일 ex)19980111
+  services:[
+    {
+    type:ObjectId,
+    ref:'Service'
+    }
+  ],
+  //생년월일
   birth:{
-      type:Number,
-      required: true,
+    type:Number,
   },
   data_created:{
     type: Date,
@@ -33,4 +38,4 @@ const authorSchema = new Schema({
   },
 });
 
-module.exports = mongoose.model('Author', authorSchema);
+module.exports = mongoose.model('Nomaluser', nomaluserSchema);
