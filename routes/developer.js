@@ -18,15 +18,15 @@ router.post('/service/new',auth.authenticate(),async(req,res,next)=>{
     try{
         //const [addRoom] = await Room.find({_id:newRoom._id}).populate('creator')
         const api_key = JWT.sign({ _id : exUser._id }, cfg.apiSecret );
-        const exUser = await User.findOne({_id:req.user._id}).populate('company');
+        const exUser = await User.findOne({_id:req.user._id});
         const service = new Service({
             name,
             api_key,
             consumer_age,
-            company:exUser.company._id,
+            company:exUser.company,
         });
         await service.save();
-        res.status(201).json(api_key)
+        res.status(201).json(service)
     }catch(error){
         next(error);
     }
@@ -34,9 +34,9 @@ router.post('/service/new',auth.authenticate(),async(req,res,next)=>{
 //해당 회사에 등록된 서비스 목록 출력
 router.get('/service/list',auth.authenticate(),async(req,res,next)=>{
     try{
-        const exUser = await User.findOne({_id:req.user._id}).populate('company');
-        const services = await Service.find({_id:exUser.company._id});
-        res.status(200).json(service);
+        const exUser = await User.findOne({_id:req.user._id});
+        const services = await Service.find({conpany:exUser.company});
+        res.status(200).json(services);
     }catch(error){
         next(error);
     }

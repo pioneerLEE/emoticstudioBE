@@ -72,12 +72,9 @@ router.get('/emojipacklist',auth.authenticate(),async(req,res,next)=>{
         next(error);
     }
 });
-
-
-
-
-
 //반려된것(+반려사유) 재제안 put /proposal/:name
+
+
 
 //patch /proposal/:name
 
