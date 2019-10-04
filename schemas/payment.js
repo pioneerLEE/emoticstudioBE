@@ -19,6 +19,13 @@ const paymentSchema = new Schema({
     type: Number,
     required: true,
   },
+  useService:{
+    type:Boolean,
+    default:true
+  },
+  info:{
+    type:String
+  },
   data_created:{
     type: Date,
     default: Date(),

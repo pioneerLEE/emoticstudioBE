@@ -2,16 +2,16 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 const { Types: { ObjectId }} = Schema;
-const nomaluserSchema = new Schema({
+const normaluserSchema = new Schema({
   user:{
     type: ObjectId,
     ref:'User',
     required: true,
   },
-  nick:{
+  /*nick:{ //필요한가?
     type:String,
     required: true,
-  },
+  },*/
   emojipacks:[
     {
         type:ObjectId,
@@ -38,4 +38,4 @@ const nomaluserSchema = new Schema({
   },
 });
 
-module.exports = mongoose.model('Nomaluser', nomaluserSchema);
+module.exports = mongoose.model('Normaluser', normaluserSchema);

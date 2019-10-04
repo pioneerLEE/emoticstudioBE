@@ -11,7 +11,7 @@ const walletSchema = new Schema({
     type:ObjectId,
     ref:'User'
   },
-  data_created:{
+  data_fix:{
     type: Date,
     default: Date(),
   },

@@ -15,17 +15,20 @@ const userSchema = new Schema({
   password:{
     type: String,
   },
-  nomaluser:{
+  normaluser:{
     type:ObjectId,
-    ref:'Nomaluser'
+    ref:'Normaluser',
+    default:null
   },
   author:{
     type:ObjectId,
-    ref:'Author'
+    ref:'Author',
+    default:null
   },
   company:{
     type:ObjectId,
-    ref:'Company'
+    ref:'Company',
+    default:null
   },
   email_verified :{ 
     type: Boolean, 
@@ -33,6 +36,20 @@ const userSchema = new Schema({
   },
   key_for_verify :{
     type: String,
+  },
+  typicalTags: [
+    {
+      type: ObjectId,
+      ref: 'Tag'
+    }
+  ],
+  account:{
+    type:ObjectId,
+    ref:'Account'
+  },
+  paypal:{
+    type:ObjectId,
+    ref:'Paypal'
   },
   data_created:{
     type: Date,
