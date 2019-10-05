@@ -6,6 +6,7 @@ const walletSchema = new Schema({
   money:{
     type: Number,
     required: true,
+    default:0,
   },
   owner:{
     type:ObjectId,

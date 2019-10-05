@@ -8,6 +8,8 @@ const rimraf = require('rimraf');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const Account = require('../schemas/account');
+const Bank = require('../schemas/bank');
 
 require('dotenv').config();
 
@@ -18,6 +20,24 @@ const upload = multer({
 //isAnimated , name , tag , price , summary , emoji 28개
 //새로운것 post /proposal/new
 
+
+//은행 등록
+router.post('/account/new',auth.authenticate(),async(req,res,next)=>{
+    const { bank, number } = req.body;
+    try{
+        const exBank = Bank.findOne({name:bank});
+        const newAccount = new Account.create({
+            owner:req.user._id,
+            bank:exBank._id,
+            number,
+        });
+        newAccount.save();
+        res.json(201);
+    }catch(error){
+        next(error);
+    }
+});
+//새로운 이모티콘팩 등록
 router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(req,res,next)=>{  //태그 관련 내용 정리 필요 //가격 체계 정리 필요
     const { isAnimated , name , tag , price , summary } = req.body;
     const emojiFiles = req.files;
@@ -30,7 +50,8 @@ router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(
             author:exAuthor._id,
             emojis:[],
             summary,
-            typicalEmoji:null
+            typicalEmoji:null,
+            status:'decision in process'
         });
         await fs.mkdir(`emoji/${name}`,(err)=>{
             if(err){
@@ -75,7 +96,16 @@ router.get('/emojipacklist',auth.authenticate(),async(req,res,next)=>{
 //반려된것(+반려사유) 재제안 put /proposal/:name
 
 
+//재 제출
+//patch /proposal/:
+router.patch('.proposal/:id',auth.authenticate(),async(req,res,next)=>{
+    try{
+        
+    }catch(error){
 
-//patch /proposal/:name
+    }
+})
+
+
 
 module.exports = router;
