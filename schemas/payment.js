@@ -7,13 +7,17 @@ const paymentSchema = new Schema({
     type:ObjectId,
     ref:'Service'
   },
-  emojipacks:{
+  emojipack:{
     type:ObjectId,
     ref:'Emojipack'
   },
   user:{
     type:ObjectId,
     ref:'User'
+  },
+  service:{
+    type:ObjectId,
+    ref:'Service'
   },
   money:{
     type: Number,
