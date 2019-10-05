@@ -51,7 +51,7 @@ router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(
             emojis:[],
             summary,
             typicalEmoji:null,
-            status:'decision in process'
+            status:"decision in process",
         });
         await fs.mkdir(`emoji/${name}`,(err)=>{
             if(err){
@@ -93,14 +93,47 @@ router.get('/emojipacklist',auth.authenticate(),async(req,res,next)=>{
         next(error);
     }
 });
+//특정 이모티콘 페이지
+router.get('emojipack/:id',auth.authenticate(),async(req,res,next)=>{
+    try{
+        const exAuthor = Author.findOne({user:req.user._id});
+        const exEmojipack = await Emojipack.findOne({_id:req.params.id});
+        if(!exEmojipack){ //해당 이모티콘이 없을 경우
+            res.sendStatus(204);
+        }else if(exEmojipack.auth !== exAuthor._id){ //해당 이모티콘이 작가 본인의 작품이 아닐 경우
+            res.sendStatus(203);
+        }else if(exEmojipack.status == "return"){ //반려된 이모티콘일 결우 사유도 함께 첨부하여 전송
+            //사유 관련 디비 만들고 사유 출력
+        }else{ 
+            res.status(200).json(exEmojipack);
+        }   
+    }catch(error){
+        next(error);
+    }
+});
+
 //반려된것(+반려사유) 재제안 put /proposal/:name
 
 
 //재 제출
 //patch /proposal/:
 router.patch('.proposal/:id',auth.authenticate(),async(req,res,next)=>{
+    const { isAnimated , name , tag , price , summary } = req.body;
     try{
-        
+        const exAuthor = Author.findOne({user:req.user._id});
+        const exEmojipack = await Emojipack.findOne({_id:req.params.id});
+        if(!exEmojipack){ //해당 이모티콘이 없을 경우
+            res.sendStatus(204);
+        }else if(exEmojipack.auth !== exAuthor._id){ //해당 이모티콘이 작가 본인의 작품이 아닐 경우
+            res.sendStatus(203);
+        }else{
+            exEmojipack.isAnimated = isAnimated;
+            exEmojipack.name = name;
+            exEmojipack.price = price;
+            exEmojipack.summary = summary;
+            exEmojipack.save();
+            res.sendStatus(200);
+        }
     }catch(error){
 
     }
