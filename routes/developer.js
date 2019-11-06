@@ -10,13 +10,13 @@ const auth = require('../middlewares/auth')();
 const cfg = require('../jwt_config');
 require('dotenv').config();
 
-
+//회사등록
 
 //새로운 서비스 등록 -> api key 생성
 router.post('/service/new',auth.authenticate(),async(req,res,next)=>{
     const {name,consumer_age } = req.body;
     try{
-        //const [addRoom] = await Room.find({_id:newRoom._id}).populate('creator')
+        //const notNew = await Service
         const api_key = JWT.sign({ _id : exUser._id }, cfg.apiSecret );
         const exUser = await User.findOne({_id:req.user._id});
         const service = new Service({

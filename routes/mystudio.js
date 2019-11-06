@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const Account = require('../schemas/account');
 const Bank = require('../schemas/bank');
+const Modificationreq = require('../schemas/modificationreq');
 
 require('dotenv').config();
 
@@ -37,49 +38,63 @@ router.post('/account/new',auth.authenticate(),async(req,res,next)=>{
         next(error);
     }
 });
-//새로운 이모티콘팩 등록
-router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(req,res,next)=>{  //태그 관련 내용 정리 필요 //가격 체계 정리 필요
-    const { isAnimated , name , tag , price , summary } = req.body;
+//새로운 이모티콘팩 등록 // 태그 업데이트 따로 router 제작 //지원 서비스 업데이트 따로 router 제작 //언어 생성 router 제작 //
+router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(req,res,next)=>{ 
+    const { isAnimated , name , keyword , price , summary,language } = req.body;
     const emojiFiles = req.files;
+    let isFree = true;
     try{
         const exAuthor = await Author.findOne({user:req.user._id});
-        
-        const exEmojipack = new Emojipack({
-            isAnimated,
-            name,
-            author:exAuthor._id,
-            emojis:[],
-            summary,
-            typicalEmoji:null,
-            status:"decision in process",
-        });
-        await fs.mkdir(`emoji/${name}`,(err)=>{
-            if(err){
-                next(err)
-            }
-        });
-        await emojiFiles.map(async(emojiFile,i)=>{
-            const ext = await emojiFile.originalname.split('.')[1];
-            const emoji = await new Emoji({
-                emojiPack:exEmojipack._id,
-                png512:`emoji/${name}/${i+1}.${ext}`,
-                number: i+1,
+        //const exLanguage = await Language.findOne({name:language});
+        const notNew = await Emojipack.findOne({name:name});
+        if(parseInt(price)){
+            isFree = false;
+            console.log(price);
+        }
+        if(!notNew){
+            const exEmojipack = new Emojipack({
+                isAnimated,
+                name,
+                author:exAuthor._id,
+                emojis:[],
+                summary,
+                keyword,
+                price,
+                isFree,
+                typicalEmoji:null,
+                status:"decision in process",
             });
-            emoji.save();
-            await exEmojipack.emojis.push(emoji._id);
-            if(i==0){
-                exEmojipack.typicalEmoji = emoji._id;
-            }
-            fs.rename(emojiFile.path,`emoji/${name}/${i}.${ext}`,(err)=>{
+            await fs.mkdir(`emoji/${name}`,(err)=>{
                 if(err){
                     next(err)
                 }
             });
-        });
-        await exAuthor.emojipacks.push(exEmojipack._id)
-        await Author.updateOne({_id:exAuthor._id},{emojipacks:exAuthor.emojipacks});
-        await exEmojipack.save();
-        res.send(201);
+            await emojiFiles.map(async(emojiFile,i)=>{
+                const ext = await emojiFile.originalname.split('.')[1];
+                const emoji = await new Emoji({
+                    emojiPack:exEmojipack._id,
+                    png512:`emoji/${name}/${i+1}.${ext}`,
+                    number: i+1,
+                });
+                emoji.save();
+                await exEmojipack.emojis.push(emoji._id);
+                if(i==0){
+                    exEmojipack.typicalEmoji = emoji._id;
+                }
+                fs.rename(emojiFile.path,`emoji/${name}/${i+1}.${ext}`,(err)=>{
+                    if(err){
+                        next(err)
+                    }
+                });
+            });
+            await exAuthor.emojipacks.push(exEmojipack._id)
+            await Author.updateOne({_id:exAuthor._id},{emojipacks:exAuthor.emojipacks});
+            await exEmojipack.save();
+            res.sendStatus(201);
+        }else{
+            res.sendStatus(204); //No Content
+        }
+        
     }catch(error){
         next(error)
     }
@@ -98,6 +113,7 @@ router.get('emojipack/:id',auth.authenticate(),async(req,res,next)=>{
     try{
         const exAuthor = Author.findOne({user:req.user._id});
         const exEmojipack = await Emojipack.findOne({_id:req.params.id});
+        const modificationreqs = await Modificationreq.find({emojipack:exEmojipack._id}).sort({data_created: -1});
         if(!exEmojipack){ //해당 이모티콘이 없을 경우
             res.sendStatus(204);
         }else if(exEmojipack.auth !== exAuthor._id){ //해당 이모티콘이 작가 본인의 작품이 아닐 경우
@@ -105,7 +121,7 @@ router.get('emojipack/:id',auth.authenticate(),async(req,res,next)=>{
         }else if(exEmojipack.status == "return"){ //반려된 이모티콘일 결우 사유도 함께 첨부하여 전송
             //사유 관련 디비 만들고 사유 출력
         }else{ 
-            res.status(200).json(exEmojipack);
+            res.status(200).json({exEmojipack:exEmojipack, modificationreq:modificationreqs[0]});
         }   
     }catch(error){
         next(error);

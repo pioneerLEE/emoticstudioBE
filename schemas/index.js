@@ -32,10 +32,10 @@ module.exports = () =>{
     require('./emojipack');
     require('./emoji');
     require('./tag');
-    require('./emojipack_user');
     require('./dibs');
     require('./visitinfo');
     require('./wallet');
-    require('./Country');
+    //require('./Country');
+    require('./modificationreq');
 }
 

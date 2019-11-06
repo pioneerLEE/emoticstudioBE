@@ -71,7 +71,7 @@ router.post('/signup/user',async(req,res,next)=>{
   }
 });
 //등록(회사)
-router.post('/register/company',upload.file('logo'),auth.authenticate(),async(req,res,next)=>{
+router.post('/register/company',auth.authenticate(),/*upload.files('logo'),*/async(req,res,next)=>{
   const { name, link, summary } = req.body;
   const logoFile = req.file;
   try{
