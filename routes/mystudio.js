@@ -47,7 +47,7 @@ router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(
         const exAuthor = await Author.findOne({user:req.user._id});
         //const exLanguage = await Language.findOne({name:language});
         const notNew = await Emojipack.findOne({name:name});
-        if(parseInt(price)){
+        if(parseFloat(price)){
             isFree = false;
             console.log(price);
         }
