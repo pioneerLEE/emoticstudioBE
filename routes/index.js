@@ -44,9 +44,9 @@ router.get('/signup/confirmEmail',async(req,res,next)=>{
 router.post('/signup/user',async(req,res,next)=>{
   const { email, password } = req.body;
   try{
-    const [checkUser] = await User.find({email});
+    const checkUser = await User.findOne({email});
     if(checkUser){ //email 중복 체크
-      res.send(401);
+      res.sendStatus(401);
     }else{ //회원가입
       let key_for_verify = crypto.randomBytes(256).toString('hex').substr(100, 5)
       key_for_verify += crypto.randomBytes(256).toString('base64').substr(50, 5); //인증 키
@@ -57,7 +57,6 @@ router.post('/signup/user',async(req,res,next)=>{
         password:hash,
         key_for_verify
       });
-      
       const msg = { //인증 메일
         to: email,
         from: 'sltkdaks@naver.com', //나중에 회사 메일 하나 만들기
@@ -66,7 +65,7 @@ router.post('/signup/user',async(req,res,next)=>{
       };
       sgMail.send(msg);
       exUser.save();
-      res.json(201);
+      res.sendStatus(201);
     }
   }catch(error){
     next(error);
@@ -109,16 +108,16 @@ router.post('/register/company',auth.authenticate(),/*upload.files('logo'),*/asy
   }
 });
 //등록(작가)
-router.post('/register/user',auth.authenticate(),async(req,res,next)=>{
+router.post('/register/author',auth.authenticate(),async(req,res,next)=>{
   const { nick, birth, country } = req.body;
   try{
     const exUser = await User.findOne({_id:req.user._id});
-    const exCountry = await Country.findOne({name:country});
+    //const exCountry = await Country.findOne({name:country});
     const exAuthor = new Author({
       user:exUser._id,
       nick,
       birth,
-      country: exCountry
+      //country: exCountry
     });
     const exWallet = new Wallet({
       owner:exUser._id,
@@ -174,12 +173,10 @@ router.post('/signup/email',async(req,res,next)=>{
 router.post('/signin',async(req,res,next)=>{
   const {email, password} = req.body;
   try{
-    const [exUser] = await User.find({email});
+    const exUser = await User.findOne({email});
     const result = await bcrypt.compare(password,exUser.password);
 
     if(result){
-      console.log(exUser._id)
-
       let token = JWT.sign({
         _id:exUser._id
       },
@@ -188,7 +185,8 @@ router.post('/signin',async(req,res,next)=>{
         expiresIn: '30 days'    // 유효 시간은 30일
       });
       res.status(200).json({
-        token: token
+        token: token,
+        User: exUser
       });
     }else{
       res.send(401); //수정해야함

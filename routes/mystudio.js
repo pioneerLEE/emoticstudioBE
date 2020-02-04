@@ -40,7 +40,7 @@ router.post('/account/new',auth.authenticate(),async(req,res,next)=>{
 });
 //새로운 이모티콘팩 등록 // 태그 업데이트 따로 router 제작 //지원 서비스 업데이트 따로 router 제작 //언어 생성 router 제작 //
 router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(req,res,next)=>{ 
-    const { isAnimated , name , keyword , price , summary,language } = req.body;
+    const { isAnimated , name , keyword , price , summary, language } = req.body;
     const emojiFiles = req.files;
     let isFree = true;
     try{
