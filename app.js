@@ -6,7 +6,10 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
+var emoticstudioRouter = require('./routes/studio');
 var mystudioRouter = require('./routes/mystudio');
+var walletRouter = require('./routes/wallet');
+var managementRouter = require('./routes/management');
 
 var app = express();
 var connect = require('./schemas');
@@ -24,7 +27,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
+app.use('/', emoticstudioRouter);
 app.use('/mystudio', mystudioRouter);
+app.use('/mystudio', walletRouter);
+app.use('/mystudio', managementRouter);
 
 //404처리 미들웨어
 app.use((req,res,next)=>{

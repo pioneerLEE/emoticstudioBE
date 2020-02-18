@@ -35,7 +35,14 @@ module.exports = () =>{
     require('./dibs');
     require('./visitinfo');
     require('./wallet');
-    //require('./Country');
+    require('./translate_req');
+    require('./country');
     require('./modificationreq');
+    require('./language');
+    require('./paypal');
+    require('./wallet');
+    require('./countrycount');
+    require('./agecount');
+    require('./withdraw_req');
 }
 

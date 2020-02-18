@@ -40,6 +40,7 @@ router.get('/signup/confirmEmail',async(req,res,next)=>{
     next(error);
   }
 });
+
 //회원가입(유저)
 router.post('/signup/user',async(req,res,next)=>{
   const { email, password } = req.body;
@@ -107,41 +108,16 @@ router.post('/register/company',auth.authenticate(),/*upload.files('logo'),*/asy
     next(error);
   }
 });
-//등록(작가)
-router.post('/register/author',auth.authenticate(),async(req,res,next)=>{
-  const { nick, birth, country } = req.body;
-  try{
-    const exUser = await User.findOne({_id:req.user._id});
-    //const exCountry = await Country.findOne({name:country});
-    const exAuthor = new Author({
-      user:exUser._id,
-      nick,
-      birth,
-      //country: exCountry
-    });
-    const exWallet = new Wallet({
-      owner:exUser._id,
-      money:0
-    });
-    exUser.company = exAuthor._id;
-    exUser.save();
-    exAuthor.save();
-    exWallet.save();
-    res.json(201);
-  }catch(error){
-    next(error);
-  }
-});
+
 
 //등록(일반회원)
 router.post('/register/user',auth.authenticate(),async(req,res,next)=>{
-  const { nick, birth } = req.body;
+  const { birth } = req.body;
   try{
     const exUser = await User.findOne({_id:req.user._id});
     
     const exNormaluser = new Normaluser({
       user:exUser._id,
-      nick,
       birth
     })
     exUser.company = exNormaluser._id;
