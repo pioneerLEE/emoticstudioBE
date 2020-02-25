@@ -189,6 +189,7 @@ router.post('/register/author',auth.authenticate(),async(req,res,next)=>{
 router.patch('/author',auth.authenticate(),upload.single('profile'),async(req,res,next)=>{
     const { nick, password, newPassword } = req.body;
     const profileImage = req.file;
+    console.log("파일:",profileImage)
     try{
         const exUser = await User.findOne({_id:req.user._id});
         const exAuthor = await Author.findOne({_id:exUser.author});
@@ -210,16 +211,20 @@ router.patch('/author',auth.authenticate(),upload.single('profile'),async(req,re
         }
         //이미지 업로드
         if(profileImage){
-          const ext = await profileImage.originalname.split('.')[1];
           if(exAuthor.profile){
-            fs.unlinkSync(exAuthor.profile)
+            fs.unlink(exAuthor.profile, function(err){
+              if( err ) throw err;
+              console.log('file deleted');
+            });
           }
+          const ext = profileImage.originalname.split('.')[1];
           fs.rename(profileImage.path,`profile/${nick}.${ext}`,(error)=>{
             if(error){
               next(error);
             }
           });
-          await Author.findOneAndUpdate({user:req.user._id},{profile:profileImage.path});
+          console.log(`profile/${nick}.${ext}`);
+          await Author.findOneAndUpdate({user:req.user._id},{profile:`profile/${nick}.${ext}`});
         }
         const updateUser = await Author.findOne({user:req.user._id});
         res.json(updateUser);
