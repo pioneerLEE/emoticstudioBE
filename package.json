@@ -22,10 +22,12 @@
     "mongoose": "^5.7.1",
     "morgan": "~1.9.1",
     "multer": "^1.4.2",
+    "nodemailer": "^6.4.3",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
     "path": "^0.12.7",
-    "rimraf": "^3.0.0"
+    "rimraf": "^3.0.0",
+    "serve-favicon": "^2.5.0"
   },
   "devDependencies": {
     "nodemon": "^1.19.2"

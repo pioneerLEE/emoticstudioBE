@@ -4,6 +4,7 @@ const cors = require('cors');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+// var favicon = require('serve-favicon') //favicon 설정
 
 var indexRouter = require('./routes/index');
 var emoticstudioRouter = require('./routes/studio');
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+//app.unsubscribe(favicon(path.join)) //favicon 설정
 
 app.use('/', indexRouter);
 app.use('/', emoticstudioRouter);

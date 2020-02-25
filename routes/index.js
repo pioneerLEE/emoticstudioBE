@@ -10,7 +10,7 @@ const Normaluser = require('../schemas/normaluser');
 const Company = require('../schemas/company');
 const Wallet = require('../schemas/wallet');
 const Country = require('../schemas/country');
-
+const nodemailer = require('nodemailer');
 const JWT = require("jsonwebtoken");
 const auth = require('../middlewares/auth')();
 const cfg = require('../jwt_config');
@@ -23,8 +23,7 @@ const upload = multer({
     dest: "comanyLogo/"
 })
 
-const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);//sendgrid 설정
+
 
 //이메일 인증
 router.get('/signup/confirmEmail',async(req,res,next)=>{
@@ -58,13 +57,30 @@ router.post('/signup/user',async(req,res,next)=>{
         password:hash,
         key_for_verify
       });
+      let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'kde740998@gmail.com',  // gmail 계정 아이디를 입력
+          pass: 'youngju3791'          // gmail 계정의 비밀번호를 입력
+        }
+      });
+
       const msg = { //인증 메일
         to: email,
         from: 'sltkdaks@naver.com', //나중에 회사 메일 하나 만들기
         subject: '회원가입 완료',
         html : '<h1>이메일 인증을 위해 URL을 클릭해주세요.</h1><br>'+url
       };
-      sgMail.send(msg);
+
+      transporter.sendMail(msg, function(error, info){
+        if (error) {
+          console.log(error);
+        }
+        else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+
       exUser.save();
       res.sendStatus(201);
     }
