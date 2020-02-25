@@ -12,7 +12,7 @@ require('dotenv').config();
 //누적수익&현재보유수익
 router.get('/wallet',auth.authenticate(),async(req,res,next)=>{
     try{
-        const exWallet = Wallet.findOne({owner:req.user._id});
+        const exWallet = await Wallet.findOne({owner:req.user._id});
         res.sendStatus(200).json(exWallet);
     }catch(error){
         next(error);
@@ -24,13 +24,32 @@ router.post('/account/new',auth.authenticate(),async(req,res,next)=>{
     const { bank, number } = req.body;
     try{
         const exBank = Bank.findOne({name:bank});
-        const newAccount = new Account({
-            owner:req.user._id,
-            bank:exBank._id,
-            number,
-        });
-        await newAccount.save();
-        res.json(201);
+        const exAccount = await Account.findOne({owner:req.user._id});
+        if(exAccount){
+            res.sendStatus(202);
+        }
+        else{
+            const newAccount = new Account({
+                owner:req.user._id,
+                bank:exBank._id,
+                number,
+            });
+            newAccount.save();
+            res.json(newAccount);
+        }
+        
+    }catch(error){
+        next(error);
+    }
+});
+
+//계좌 수정
+router.patch('/account/:id',auth.authenticate(),async(req,res,next)=>{
+    const { bank, number } = req.body;
+    try{
+        const exBank = await Bank.findOne({name:bank});
+        const exAccount = await Account.updateOne({_id:req.params.id},{bank:exBank._id,number});
+        res.json(exAccount);
     }catch(error){
         next(error);
     }
@@ -57,23 +76,58 @@ router.post('/account/:id/withdraw',auth.authenticate(),async(req,res,next)=>{
     }
 });
 
+
 //paypal 등록
 router.post('/paypal/new',auth.authenticate(),async(req,res,next)=>{
     const { email } = req.body;
     try{
-        const newPaypal = new Paypal({
-            owner:req.user._id,
-            email:email,
-        });
-        await newPaypal.save();
-        res.json(201);
+        const exPaypal = await Paypal.findOne({owner:req.user._id});
+        if(exPaypal){
+            res.sendStatus(202);
+        }else{
+            const newPaypal = new Paypal({
+                owner:req.user._id,
+                email:email,
+            });
+            await newPaypal.save();
+            res.json(newPaypal);
+        }
+        
     }catch(error){
         next(error);
     }
 });
 
+//paypal 수정
+router.patch('/paypal/:id',auth.authenticate(),async(req,res,next)=>{
+    const { email } = req.body;
+    try{
+        const exPaypal = await Paypal.updateOne({_id:req.params.id},{email:email});
+        res.json(exPaypal);
+    }catch(error){
+        next(error);
+    }
+});
 
-
+//은행추가하기
+router.post('/bank/new',async(req,res,next)=>{
+    const { name } = req.body;
+    try{
+        const exBank = await Bank.findOne({name});
+        console.log(exBank);
+        if(exBank){
+            res.sendStatus(202);
+        }else{
+            const newBank = new Bank({
+                name:name
+            });
+            await newBank.save();
+            res.sendStatus(201);
+        }
+    }catch(error){
+        next(error);
+    }
+});
 
 
 

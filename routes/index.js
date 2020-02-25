@@ -20,9 +20,8 @@ require('dotenv').config();
 const multer = require('multer');
 
 const upload = multer({
-    dest: "comanyLogo/"
-})
-
+    dest: "profile/"
+});
 
 
 //이메일 인증
@@ -88,58 +87,25 @@ router.post('/signup/user',async(req,res,next)=>{
     next(error);
   }
 });
-//등록(회사)
-router.post('/register/company',auth.authenticate(),/*upload.files('logo'),*/async(req,res,next)=>{
-  const { name, link, summary } = req.body;
-  const logoFile = req.file;
-  try{
-    const exUser = await User.findOne({_id:req.user._id});
-    const exCompany = new Company({
-      user:exUser._id,
-      name,
-      link,
-      summary,
-      logo:`emoji/${name}/logo.${ext}`,
-    });
-    const exWallet = new Wallet({
-      owner:exUser._id,
-      money:0
-    });
-    exUser.company = exCompany._id;
-    fs.mkdir(`emoji/${name}`,(err)=>{
-      if(err){
-          next(err)
-      }
-    });
-    fs.rename(logoFile.path,`emoji/${name}/logo.${ext}`,(err)=>{
-      if(err){
-          next(err)
-      }
-    });
-    exUser.save();
-    exCompany.save();
-    exWallet.save();
-    res.json(201);
-  }catch(error){
-    next(error);
-  }
-});
-
 
 //등록(일반회원)
 router.post('/register/user',auth.authenticate(),async(req,res,next)=>{
   const { birth } = req.body;
   try{
     const exUser = await User.findOne({_id:req.user._id});
-    
-    const exNormaluser = new Normaluser({
-      user:exUser._id,
-      birth
-    })
-    exUser.company = exNormaluser._id;
-    exUser.save();
-    exNormaluser.save();
-    res.json(201);
+    const exNormaluser = await Normaluser.findOne({user:exUser._id});
+    if(exNormaluser){
+      res.sendStatus(202);
+    }else{
+      const newNormaluser = new Normaluser({
+        user:exUser._id,
+        birth
+      })
+      exUser.normaluser = newNormaluser._id;
+      exUser.save();
+      newNormaluser.save();
+      res.sendStatus(201);
+    }
   }catch(error){
     next(error);
   }
@@ -184,6 +150,117 @@ router.post('/signin',async(req,res,next)=>{
       res.send(401); //수정해야함
       
     }
+  }catch(error){
+    next(error);
+  }
+});
+//등록(작가)
+router.post('/register/author',auth.authenticate(),async(req,res,next)=>{
+  const { nick, birth, /*country*/ } = req.body;
+  try{
+    const exUser = await User.findOne({_id:req.user._id});
+    if(exUser.author){
+      res.sendStatus(202);
+    }
+    else{
+      const exAuthor = new Author({
+        user:exUser._id,
+        nick,
+        birth,
+      });
+      const exWallet = new Wallet({
+        owner:exUser._id,
+        money:0
+      });
+      exUser.author = exAuthor._id;
+      exUser.save();
+      console.log(exAuthor);
+      exAuthor.save();
+      exWallet.save();
+      res.sendStatus(201);
+    }
+  }catch(error){
+    next(error);
+  }
+});
+
+
+//작가 정보 수정
+router.patch('/author',auth.authenticate(),upload.single('profile'),async(req,res,next)=>{
+    const { nick, password, newPassword } = req.body;
+    const profileImage = req.file;
+    try{
+        const exUser = await User.findOne({_id:req.user._id});
+        const exAuthor = await Author.findOne({_id:exUser.author});
+
+        //비밀번호 바꾸기
+        if(password && newPassword){
+          const result = await bcrypt.compare(password,exUser.password);
+          console.log(result);
+          if(result){
+            hash = await bcrypt.hash(newPassword, 5);
+            await User.findOneAndUpdate({_id:req.user._id},{password:hash})
+          }else{
+            res.sendStatus(202); //비밀번호가 잘못됨.
+          }
+        }
+        //닉네임 바꾸기
+        if(nick){
+          await Author.findOneAndUpdate({user:req.user._id},{nick})
+        }
+        //이미지 업로드
+        if(profileImage){
+          const ext = await profileImage.originalname.split('.')[1];
+          if(exAuthor.profile){
+            fs.unlinkSync(exAuthor.profile)
+          }
+          fs.rename(profileImage.path,`profile/${nick}.${ext}`,(error)=>{
+            if(error){
+              next(error);
+            }
+          });
+          await Author.findOneAndUpdate({user:req.user._id},{profile:profileImage.path});
+        }
+        const updateUser = await Author.findOne({user:req.user._id});
+        res.json(updateUser);
+    }catch(error){
+        next(error);
+    }
+})
+
+
+//등록(회사)
+router.post('/register/company',auth.authenticate(),/*upload.files('logo'),*/async(req,res,next)=>{
+  const { name, link, summary } = req.body;
+  const logoFile = req.file;
+  try{
+    const exUser = await User.findOne({_id:req.user._id});
+    const exCompany = new Company({
+      user:exUser._id,
+      name,
+      link,
+      summary,
+      logo:`emoji/${name}/logo.${ext}`,
+    });
+    const exWallet = new Wallet({
+      owner:exUser._id,
+      money:0
+    });
+    exUser.company = exCompany._id;
+    fs.mkdir(`emoji/${name}`,(err)=>{
+      if(err){
+          next(err)
+      }
+    });
+    fs.rename(logoFile.path,`emoji/${name}/logo.${ext}`,(err)=>{
+      if(err){
+          next(err)
+      }
+    });
+    exUser.save();
+    exCompany.save();
+    exWallet.save();
+    res.json(201);
   }catch(error){
     next(error);
   }
