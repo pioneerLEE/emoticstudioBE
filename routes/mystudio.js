@@ -4,6 +4,7 @@ const Author = require('../schemas/author');
 const Emojipack = require('../schemas/emojipack');
 const Emoji = require('../schemas/emoji');
 const auth = require('../middlewares/auth')();
+const User = require('../schemas/user');
 const rimraf = require('rimraf');
 const multer = require('multer');
 const fs = require('fs');
@@ -66,7 +67,7 @@ router.post('/translate/:id',auth.authenticate(),async(req,res,next)=>{
 
 //새로운 이모티콘팩 등록
 router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(req,res,next)=>{ 
-    const { isAnimated , name , keyword , price , summary, language,emojiCount,reqList } = req.body;
+    const { isAnimated , name , keyword , price , summary, language,emojiCount } = req.body;
     const emojiFiles = req.files;
     let isFree = true;
     try{
@@ -138,7 +139,9 @@ router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(
 //해당 작가가 보유한 이모티콘 목록
 router.get('/emojipacklist',auth.authenticate(),async(req,res,next)=>{
     try{
-        const emojipacklist = await Emojipack.find({author:req.user._id});
+        const exUser = await User.findOne({_id:req.user._id})
+        const emojipacklist = await Emojipack.find({author:exUser.author});
+        console.log(emojipacklist)
         res.status(200).json(emojipacklist);
     }catch(error){
         next(error);
@@ -214,8 +217,81 @@ router.patch('/proposal/:id',auth.authenticate(),async(req,res,next)=>{
 });
 
 //반려된 제안 삭제하기
-router.delete('/proposla/:id',auth.authenticate(),async(req,res,next)=>{
+router.delete('/emojipack/:id',auth.authenticate(),async(req,res,next)=>{
+    try{
+        const exAuthor = await Author.findOne({user:req.user._id});
+        const exEmojipack = await Emojipack.findOne({_id:req.params.id,author:exAuthor._id});
+        if(!exEmojipack){
+            res.sendStatus(202);
+        }else{
+            //작가의 DB에서 삭제
+            await Promise.all(exAuthor.emojipacks.map(async(emojipack,index)=>{
+                console.log("작가의 DB에서 삭제",emojipack,exEmojipack._id)
+                if(emojipack.equals(exEmojipack._id)){
+                    await exAuthor.emojipacks.splice(index,1);
+                }
+            }));
+            await exAuthor.save();
+            //Emojipack의 emoji DB에서 삭제 && 파일자체 삭제
+            await Promise.all(exEmojipack.emojis.map(async(emoji,index)=>{
+                let exEmoji = await Emoji.findById(emoji);
+                fs.unlink(exEmoji.png512, function(err){
+                    if( err ) throw err;
+                    console.log('file deleted');
+                });
+                await Emoji.findByIdAndDelete(emoji);
+            }));
+            //빈폴더 삭제
+            fs.rmdirSync(`emoji/${exEmojipack.name}`)
+            //Emojipack 삭제
+            await Emojipack.findByIdAndRemove(req.params.id);
+            res.sendStatus(200);
+        }
+    }catch(error){
+        next(error);
+    }
+});
 
+//이모티콘 상태-반려로 전환 return
+router.patch('/emojipack/:id/return',async(req,res,next)=>{
+    try{
+        const exEmojipack = await Emojipack.findOneAndUpdate({_id:req.params.id},{status:'return'});
+        if(!exEmojipack){
+            res.sendStatus(202);
+        }else{
+            res.sendStatus(200);
+        }
+    }catch(error){
+        next(error);
+    }
+});
+
+//이모티콘 상태-통과로 전환 complete
+router.patch('/emojipack/:id/complete',async(req,res,next)=>{
+    try{
+        const exEmojipack = await Emojipack.findOneAndUpdate({_id:req.params.id},{status:'complete'});
+        if(!exEmojipack){
+            res.sendStatus(202);
+        }else{
+            res.sendStatus(200);
+        }
+    }catch(error){
+        next(error);
+    }
+});
+
+//이모티콘 상태-수정확인중으로 전환 checking modification
+router.patch('/emojipack/:id/checkingmodification',async(req,res,next)=>{
+    try{
+        const exEmojipack = await Emojipack.findOneAndUpdate({_id:req.params.id},{status:'checking modification'});
+        if(!exEmojipack){
+            res.sendStatus(202);
+        }else{
+            res.sendStatus(200);
+        }
+    }catch(error){
+        next(error);
+    }
 });
 
 

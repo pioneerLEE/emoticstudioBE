@@ -14,7 +14,6 @@ module.exports = function(){
     const strategy = new Strategy(params,async(payload, done)=>{
 
         const [exUser] = await User.find({_id:payload._id});
-        console.log('user: ',exUser)
         if(exUser){
             return done(null,{ _id : exUser._id });
         }else{
