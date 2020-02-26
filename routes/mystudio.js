@@ -22,6 +22,28 @@ const upload = multer({
     dest: "emoji/"
 })
 
+//반려사유생성하기
+router.post('/modificationreq/new',async(req,res,next)=>{
+    const { message, emojipack_id } = req.body;
+    try{
+        const exEmojipack = await Emojipack.findOne({_id:emojipack_id});
+        if(exEmojipack){
+            const newModificationreq = new Modificationreq({
+                emojipack:exEmojipack._id,
+                message
+            });
+            newModificationreq.save();
+            res.sendStatus(201);
+        }
+        else{
+            res.sendStatus(202);
+        }
+    }catch(error){
+        next(error);
+    }
+});
+
+
 //언어추가
 router.post('/language',async(req,res,next)=>{
     const {language} = req.body;
@@ -141,7 +163,6 @@ router.get('/emojipacklist',auth.authenticate(),async(req,res,next)=>{
     try{
         const exUser = await User.findOne({_id:req.user._id})
         const emojipacklist = await Emojipack.find({author:exUser.author});
-        console.log(emojipacklist)
         res.status(200).json(emojipacklist);
     }catch(error){
         next(error);
@@ -151,70 +172,28 @@ router.get('/emojipacklist',auth.authenticate(),async(req,res,next)=>{
 //특정 이모티콘 페이지
 router.get('/emojipack/:id',auth.authenticate(),async(req,res,next)=>{
     try{
-        const exAuthor = Author.findOne({user:req.user._id});
+        const exAuthor = await Author.findOne({user:req.user._id});
         const exEmojipack = await Emojipack.findOne({_id:req.params.id});
         
+        console.log(exEmojipack.author,exAuthor._id)
         if(!exEmojipack){ //해당 이모티콘이 없을 경우
             res.sendStatus(204);
-        }else if(exEmojipack.auth !== exAuthor._id){ //해당 이모티콘이 작가 본인의 작품이 아닐 경우
+        }else if(!exEmojipack.author.equals(exAuthor._id)){ //해당 이모티콘이 작가 본인의 작품이 아닐 경우
             res.sendStatus(203);
         }else if(exEmojipack.status == "return"){ //반려된 이모티콘일 결우 사유도 함께 첨부하여 전송
             const modificationreqs = await Modificationreq.find({emojipack:exEmojipack._id}).sort({data_created: -1});
             res.status(200).json({exEmojipack, modificationreq:modificationreqs[0]});
-        }else{ 
-            if(exEmojipack.status == 'complete'){
-                res.status(200).json({exEmojipack});
-            }
+        }else if(exEmojipack.status == "decision in process" || exEmojipack.status == "checking modification"){ 
+            res.status(200).json(exEmojipack.status);
+        }else if(exEmojipack.status == 'complete'){
+            res.status(200).json(exEmojipack);
         }   
     }catch(error){
         next(error);
     }
 });
 
-//반려된것 다시 제안하기
-router.patch('/proposal/:id',auth.authenticate(),async(req,res,next)=>{
-    const { isAnimated , name , keyword , price , summary, language,emojiCount,isReqTrans,reqList } = req.body;
-    try{
-        const exAuthor = Author.findOne({user:req.user._id});
-        const exEmojipack = await Emojipack.findOne({_id:req.params.id});
-        const exLanguage = await Language.findOne({name:language});
-
-        if(!isReqTrans){
-            await Translate_req.findOneAndRemove({emojipack:exEmojipack._id});
-        }
-        const exTranslate_req = await Translate_req.findOne({emojipack:exEmojipack._id});
-        if(!exEmojipack){ //해당 이모티콘이 없을 경우
-            res.sendStatus(204);
-        }else if(exEmojipack.auth !== exAuthor._id){ //해당 이모티콘이 작가 본인의 작품이 아닐 경우
-            res.sendStatus(203);
-        }else{
-            exEmojipack.isAnimated = isAnimated;
-            exEmojipack.name = name;
-            exEmojipack.price = price;
-            exEmojipack.summary = summary;
-            exEmojipack.keyword = keyword;
-            exEmojipack.language = exLanguage._id,
-            exEmojipack.emojiCount = emojiCount,
-            exEmojipack.isReqTrans = isReqTrans,
-            exEmojipack.status = "checking modification"
-
-            await exEmojipack.save();
-
-            if(isReqTrans){
-                let languageList = [];
-                await reqList.map(async(reqlang,i)=>{
-                    let lang = await Language.findOne({name:reqlang});
-                    languageList.push(lang._id);
-                });
-                exTranslate_req.languages = languageList;
-                await exTranslate_req.save();
-            }
-            res.sendStatus(200);
-        }
-    }catch(error){
-
-    }
-});
+//반려된것 다시 제안하기-> 반려된 제안 삭제하기 & 새로운 이모티콘 팩 등록
 
 //반려된 제안 삭제하기
 router.delete('/emojipack/:id',auth.authenticate(),async(req,res,next)=>{
@@ -242,7 +221,9 @@ router.delete('/emojipack/:id',auth.authenticate(),async(req,res,next)=>{
                 await Emoji.findByIdAndDelete(emoji);
             }));
             //빈폴더 삭제
-            fs.rmdirSync(`emoji/${exEmojipack.name}`)
+            fs.rmdirSync(`emoji/${exEmojipack.name}`);
+
+            await Translate_req.findOneAndRemove({emojipack:exEmojipack._id});
             //Emojipack 삭제
             await Emojipack.findByIdAndRemove(req.params.id);
             res.sendStatus(200);

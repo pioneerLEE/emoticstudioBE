@@ -55,16 +55,26 @@ router.patch('/account/:id',auth.authenticate(),async(req,res,next)=>{
     }
 });
 
-//계좌로 출금 신청하기
-router.post('/account/:id/withdraw',auth.authenticate(),async(req,res,next)=>{
-    const { money } = req.body;
+//출금 신청하기
+router.post('/withdraw',auth.authenticate(),async(req,res,next)=>{
+    const { way } = req.body;
     try{
-        const exReq = await Withdraw_req.find({account:req.params.id}).sort({data_created: -1});
+        const exReq = await Withdraw_req.find({account:req.params.id}).sort('-data_created');
+        console.log(exReq[0]);
         //신규 출금 신청일 경우
-        if(!exReq || exReq[0].status == 'complete'){
+        if(!exReq[0]){
             const newWithdraw_req = new Withdraw_req({
-                money: money,
-                account: req.params.id,
+                user:req.user._id,
+                status:"waiting",
+                way
+            });
+            await newWithdraw_req.save();
+            res.sendStatus(201);
+        }else if(exReq[0].status == 'complete'){
+            const newWithdraw_req = new Withdraw_req({
+                user:req.user._id,
+                status:"waiting",
+                way
             });
             await newWithdraw_req.save();
             res.sendStatus(201);
