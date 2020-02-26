@@ -21,33 +21,83 @@ const upload = multer({
     dest: "emoji/"
 })
 
+//언어추가
+router.post('/language',async(req,res,next)=>{
+    const {language} = req.body;
+    try{
+        const exLanguage = await Language.findOne({name:language});
+        if(exLanguage){
+            res.sendStatus(202);
+        }else{
+            const newLanguage = new Language({
+                name:language
+            });
+            newLanguage.save();
+            res.sendStatus(201);
+        }
+    }catch(error){
+        next(error);
+    }
+})
+//번역요청
+router.post('/translate/:id',auth.authenticate(),async(req,res,next)=>{
+    const { reqList } = req.body;
+    const emojipack_id = req.params.id;
+    try{
+        const exEmojipack = await Emojipack.findOne({_id:emojipack_id});
+        let languages=[];
+        let language;
+        await Promise.all(reqList.map(async(req,i)=>{
+            language= await Language.findOne({name:req});
+            console.log(language);
+            languages.push(language._id); 
+        }))
+        console.log(languages);
+        var exTranslate_req = await new Translate_req({
+            emojipack:exEmojipack._id,
+            languages
+        });
+        await exTranslate_req.save();
+        res.sendStatus(201);  
+    }catch(error){
+        next(error);
+    }
+})
 
 //새로운 이모티콘팩 등록
 router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(req,res,next)=>{ 
-    const { isAnimated , name , keyword , price , summary, language,emojiCount,isReqTrans,reqList } = req.body;
+    const { isAnimated , name , keyword , price , summary, language,emojiCount,reqList } = req.body;
     const emojiFiles = req.files;
     let isFree = true;
     try{
         const exAuthor = await Author.findOne({user:req.user._id});
-        //const exLanguage = await Language.findOne({name:language});
-        const notNew = await Emojipack.findOne({name:name});
+        const exLanguage = Language.findOne({name:language});
+        const notNew = await Emojipack.findOne({name});
         if(parseFloat(price)){
             isFree = false;
             console.log(price);
         }
-        if(!notNew){
+        if(notNew){
+            emojiFiles.map((file,index)=>{
+                fs.unlink(file.path, function(err){
+                    if( err ) throw err;
+                    console.log('file deleted');
+                });
+            })
+            res.sendStatus(204);
+        }
+        else{
             const exEmojipack = new Emojipack({
                 isAnimated,
                 emojiCount,
                 name,
                 author:exAuthor._id,
-                //language:exLanguage._id,
+                language:exLanguage._id,
                 emojis:[],
                 summary,
                 keyword,
                 price,
                 isFree,
-                isReqTrans,
                 typicalEmoji:null,
                 status:"decision in process",
             });
@@ -56,7 +106,7 @@ router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(
                     next(err)
                 }
             });
-            await emojiFiles.map(async(emojiFile,i)=>{
+            await Promise.all(emojiFiles.map(async(emojiFile,i)=>{
                 const ext = await emojiFile.originalname.split('.')[1];
                 let emoji = await new Emoji({
                     emojiPack:exEmojipack._id,
@@ -73,27 +123,12 @@ router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(
                         next(err)
                     }
                 });
-            });
-            /*if(isReqTrans){
-                //language 탐색
-                //해당 language들을 포함한 translate_req 생성
-                let languageList = [];
-                await reqList.map(async(req,i)=>{
-                    let lang = await Language.findOne({name:req});
-                    languageList.push(lang._id);
-                });
-                const exTranslate_req = new Translate_req({
-                    emojipack:exEmojipack._id,
-                    languages:languageList
-                })
-            }*/
-            await exAuthor.emojipacks.push(exEmojipack._id)
+            }));
+            await exAuthor.emojipacks.push(exEmojipack._id);
             await Author.updateOne({_id:exAuthor._id},{emojipacks:exAuthor.emojipacks});
             await exEmojipack.save();
-            //await exTranslate_req.save();
+            
             res.sendStatus(201);
-        }else{
-            res.sendStatus(204); //No Content
         }
     }catch(error){
         next(error)
