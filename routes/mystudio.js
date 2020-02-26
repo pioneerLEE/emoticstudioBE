@@ -182,10 +182,12 @@ router.get('/emojipack/:id',auth.authenticate(),async(req,res,next)=>{
             res.sendStatus(203);
         }else if(exEmojipack.status == "return"){ //반려된 이모티콘일 결우 사유도 함께 첨부하여 전송
             const modificationreqs = await Modificationreq.find({emojipack:exEmojipack._id}).sort({data_created: -1});
+            console.log(modificationreqs[0]);
             res.status(200).json({exEmojipack, modificationreq:modificationreqs[0]});
         }else if(exEmojipack.status == "decision in process" || exEmojipack.status == "checking modification"){ 
             res.status(200).json(exEmojipack.status);
         }else if(exEmojipack.status == 'complete'){
+            console.log(modificationreqs[0]);
             res.status(200).json(exEmojipack);
         }   
     }catch(error){
