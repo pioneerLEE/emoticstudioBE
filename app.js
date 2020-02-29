@@ -7,7 +7,6 @@ var logger = require('morgan');
 // var favicon = require('serve-favicon') //favicon 설정
 
 var indexRouter = require('./routes/index');
-var emoticstudioRouter = require('./routes/studio');
 var mystudioRouter = require('./routes/mystudio');
 var walletRouter = require('./routes/wallet');
 var managementRouter = require('./routes/management');
@@ -29,7 +28,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 //app.unsubscribe(favicon(path.join)) //favicon 설정
 
 app.use('/', indexRouter);
-app.use('/', emoticstudioRouter);
 app.use('/mystudio', mystudioRouter);
 app.use('/mystudio', walletRouter);
 app.use('/mystudio', managementRouter);
