@@ -5,16 +5,13 @@ const Emojipack = require('../schemas/emojipack');
 const Emoji = require('../schemas/emoji');
 const auth = require('../middlewares/auth')();
 const User = require('../schemas/user');
-const rimraf = require('rimraf');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const Account = require('../schemas/account');
-const Bank = require('../schemas/bank');
 const Modificationreq = require('../schemas/modificationreq');
 const Translate_req = require('../schemas/translate_req');
 const Language = require('../schemas/language');
-const Paypal = require('../schemas/paypal');
+const Newlist = require('../schemas/newlist');
 
 require('dotenv').config();
 
@@ -115,6 +112,7 @@ router.post('/proposal/new',auth.authenticate(),upload.array('emoji', 30),async(
                 emojiCount,
                 name,
                 author:exAuthor._id,
+                author_nick:exAuthor.nick,
                 language:exLanguage._id,
                 emojis:[],
                 summary,
@@ -267,6 +265,75 @@ router.patch('/emojipack/:id/complete',async(req,res,next)=>{
 router.patch('/emojipack/:id/checkingmodification',async(req,res,next)=>{
     try{
         const exEmojipack = await Emojipack.findOneAndUpdate({_id:req.params.id},{status:'checking modification'});
+        if(!exEmojipack){
+            res.sendStatus(202);
+        }else{
+            res.sendStatus(200);
+        }
+    }catch(error){
+        next(error);
+    }
+});
+
+router.patch('/emojipack/:id/sale',async(req,res,next)=>{
+    try{
+        const exEmojipack = await Emojipack.findOneAndUpdate({_id:req.params.id},{sale:true});
+        const exEmoji = await Emoji.findById(exEmojipack.emojis[0]);
+        let exNewlist = await Newlist.findOne({});
+        if(!exEmojipack){
+            res.sendStatus(202);
+        }else{
+            if(!exNewlist){
+                const newNewlist = await new Newlist({
+                    emojipacks:[exEmojipack._id],
+                    count:1,
+                    emojipacks_thumbnail:[exEmoji.png512],
+                    emojipacks_name:[exEmojipack.name],
+                    emojipacks_author_nick:[exEmojipack.author_nick],
+
+                });
+                await newNewlist.save();
+                res.json(newNewlist);
+            }else{
+                if(exNewlist.count === 3 ){
+                    await Promise.all(exNewlist.emojipacks.map(async(emojipack,index)=>{
+                        if(index == 2){
+                            exNewlist.emojipacks[index]=exEmojipack._id;
+                            exNewlist.emojipacks_thumbnail[index]=exEmoji.png512;
+                            exNewlist.emojipacks_name[index]=exEmojipack.name;
+                            exNewlist.emojipacks_author_nick[index]=exEmojipack.author_nick;
+                        }else{
+                            exNewlist.emojipacks[index]=exNewlist.emojipacks[index+1];
+                            exNewlist.emojipacks_thumbnail[index]=exNewlist.emojipacks_thumbnail[index+1];
+                            exNewlist.emojipacks_name[index]=exNewlist.emojipacks_name[index+1];
+                            exNewlist.emojipacks_author_nick[index]=exNewlist.emojipacks_author_nick[index+1];
+                        }
+                    }));
+                }else if(exNewlist.count < 3){
+                    await exNewlist.emojipacks.push(exEmojipack._id);
+                    await exNewlist.emojipacks_thumbnail.push(exEmoji.png512);
+                    await exNewlist.emojipacks_name.push(exEmojipack.name);
+                    await exNewlist.emojipacks_author_nick.push(exEmojipack.author_nick);
+                }
+                await Newlist.findOneAndUpdate({_id:exNewlist._id},
+                    {
+                        emojipacks:exNewlist.emojipacks,
+                        count:exNewlist.count+1,
+                        emojipacks_thumbnail:exNewlist.emojipacks_thumbnail,
+                        emojipacks_name:exNewlist.emojipacks_name,
+                        emojipacks_author_nick:exNewlist.emojipacks_author_nick
+                    });
+            }
+            res.sendStatus(200);
+        } 
+    }catch(error){
+        next(error);
+    }
+});
+
+router.patch('/emojipack/:id/notsale',async(req,res,next)=>{ //만약 인기리스트나 신규리스트에 해당 이모티콘이 있을 경우 빼버려야함.
+    try{
+        const exEmojipack = await Emojipack.findOneAndUpdate({_id:req.params.id},{sale:false});
         if(!exEmojipack){
             res.sendStatus(202);
         }else{

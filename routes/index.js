@@ -112,15 +112,13 @@ router.post('/register/user',auth.authenticate(),async(req,res,next)=>{
 });
 
 //이메일 중복 체크
-router.post('/signup/email',async(req,res,next)=>{
-  const {email} = req.body;
+router.get('/signup/email/:email',async(req,res,next)=>{
   try{
-    const [checkUser] = await User.find({email});
-    console.log(checkUser)
+    const checkUser = await User.findOne({email:req.params.email});
     if(checkUser){ //email 중복됨
-      res.send(200);
+      res.sendStatus(200);
     }else{ //중복되지 않는 이메일
-      res.send(204);
+      res.sendStatus(202);
     }
   }catch(error){
     next(error);

@@ -43,5 +43,6 @@ module.exports = () =>{
     require('./countrycount');
     require('./agecount');
     require('./withdraw_req');
+    require('./newlist');
 }
 
